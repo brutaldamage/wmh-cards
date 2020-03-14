@@ -2,10 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+
 using System.Threading.Tasks;
 using CCCardMaker.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CCCardMaker.Pages
 {
@@ -26,6 +29,7 @@ namespace CCCardMaker.Pages
 			if(GetListId(out string ccid))
 			{
 				var url = $"https://api.conflictchamber.com/list/{ccid}.JSON";
+
 				var ccListInfo = await Http.GetJsonAsync<CCInfoResponse>(url);
 
 				var data = await Http.GetJsonAsync<DataModel[]>("data/data.json");
@@ -33,7 +37,7 @@ namespace CCCardMaker.Pages
 
 				foreach (var list in ccListInfo.Lists)
 				{
-					var caster = list.Models.First(x => x.Type == "Warcaster" || x.Type == "Warlock" || x.Type == "Infernal Master");
+					var caster = list.Models.First(x => x.Type == "Warcaster" || x.Type == "Warlock" || x.Type == "Master");
 
 					List<string> modelNames = new List<string>();
 					foreach (var model in list.Models)
@@ -50,9 +54,15 @@ namespace CCCardMaker.Pages
 
 					var grouped = modelNames.GroupBy(x => x);
 					string queryString = null;
+
+					var distinct = grouped.Select(x => x.Key);
+
 					foreach (var group in grouped)
 					{
-						var card = data.FirstOrDefault(x => x.Name == group.Key);
+						var value = group.Select(x => x).Where(x => !string.IsNullOrEmpty(x));
+
+						var card = data.FirstOrDefault(x => x.Name.Trim().ToLower() == group.Key.Trim().ToLower() && !string.IsNullOrEmpty(x.CardId));
+
 						if (card != null)
 						{
 							queryString += $"${card.CardId},{group.Count()}";
