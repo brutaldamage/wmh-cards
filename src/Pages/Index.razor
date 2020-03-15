@@ -19,9 +19,11 @@
 
 @if (this.PDFLinks != null && this.PDFLinks.Count > 0)
 {
-    <h2>PDF Links</h2>
+    <h2>Lists Links</h2>
     foreach (var link in PDFLinks)
     {
-        <p><a href="@link.Value">@link.Key</a></p>
+        <h3>@link.Item1</h3>
+        <p><a href="@link.Item2">Download Card PDF</a></p>
+        <p><span style="white-space: pre-line"> @link.Item3</span></p>
     }
 }
