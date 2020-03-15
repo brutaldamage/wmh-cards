@@ -1,0 +1,25 @@
+@page "/feedback"
+
+<h1>Feedback</h1>
+
+<p>Please use this form to leave feedback or report an issue.</p>
+
+<EditForm Model="this" OnValidSubmit="OnValidSubmit" data-netlify="true">
+
+    <div class="form-group">
+        <label class="control-label" for="realName"><b>Name</b></label>
+        <InputText id="realName" class="form-control" @bind-Value="@Name" />
+    </div>
+
+    <div class="form-group">
+        <label class="control-label" for="email"><b>Email</b></label>
+        <InputText id="email" class="form-control" @bind-Value="@Email" />
+    </div>
+
+    <div class="form-group">
+        <label class="control-label" for="comments"><b>Comments</b></label>
+        <InputTextArea class="form-control" name="comments" @bind-Value="@Comments" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</EditForm>
