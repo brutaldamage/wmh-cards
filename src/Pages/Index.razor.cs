@@ -4,13 +4,13 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using CCCardMaker.Models;
+using WMHCardGenerator.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace CCCardMaker.Pages
+namespace WMHCardGenerator.Pages
 {
 	public partial class Index
 	{

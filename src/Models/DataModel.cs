@@ -1,5 +1,5 @@
 using System;
-namespace CCCardMaker.Models
+namespace WMHCardGenerator.Models
 {
 	public class DataModel
 	{

@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace CCCardMaker.Models
+namespace WMHCardGenerator.Models
 {
 	public class CCInfoResponse
 	{
