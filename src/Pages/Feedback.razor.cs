@@ -5,7 +5,6 @@ namespace WMHCardGenerator.Pages
 {
 	public partial class Feedback
 	{
-
 		[Inject]
 		public NavigationManager Navigation { get; set; }
 
@@ -17,6 +16,8 @@ namespace WMHCardGenerator.Pages
 
 		void OnValidSubmit()
 		{
+
+
 			Navigation.NavigateTo("/");
 		}
 	}
