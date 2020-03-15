@@ -3,6 +3,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMHCardGenerator", "src\WMHCardGenerator.csproj", "{7311A0BB-8502-4994-ADB2-5DF326C2F6BB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WMHCardGenerator.Core", "WMHCardGenerator.Core\WMHCardGenerator.Core.csproj", "{CC76D1D3-8592-48EE-AD5D-704D881CC4BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ListTester", "ListTester\ListTester.csproj", "{73C63D27-8CED-4736-A889-EDE21E8216DE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,5 +17,13 @@ Global
 		{7311A0BB-8502-4994-ADB2-5DF326C2F6BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7311A0BB-8502-4994-ADB2-5DF326C2F6BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7311A0BB-8502-4994-ADB2-5DF326C2F6BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC76D1D3-8592-48EE-AD5D-704D881CC4BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC76D1D3-8592-48EE-AD5D-704D881CC4BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC76D1D3-8592-48EE-AD5D-704D881CC4BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC76D1D3-8592-48EE-AD5D-704D881CC4BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73C63D27-8CED-4736-A889-EDE21E8216DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73C63D27-8CED-4736-A889-EDE21E8216DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73C63D27-8CED-4736-A889-EDE21E8216DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73C63D27-8CED-4736-A889-EDE21E8216DE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -6,24 +6,32 @@
 
 <p>It accepts a link for a <a target="_blank" href="https://conflictchamber.com/">Conflict Chamber</a> list, and will generate a PDF from the card database using the models in the list.</p>
 
+<h4>Notes</h4>
+<ul>
+	<li>1) Tool is still in development. There are A LOT of cards in the database and it is very likely I missed some models and matching up the ids. If you're having problems, please fill out the feedback form and let me know what lists/models aren't working.</li>
+	<li>2) Right now I don't have a good way to determine if a model's card has multiple health bards on it. So For models like Trancers, Gallows grove, or other solos that use a single card, multiple cards will be added to the PDF.</li>
+</ul>
+
 <br />
 
 <EditForm Model="this" OnValidSubmit="GeneratePDF">
     <div class="form-group">
         <label class="control-label" for="listInput"><b>Enter List Url</b></label>
+        <p>This should be the permalink from conflict chamber
+		<br />
+		ex: https://conflictchamber.com/?cg201b_-1yo8oeoaoaoaolosonoSotoqoqororopofogovou</p>
         <InputText id="listInput" class="form-control" @bind-Value="@ConflictChamberList" />
         <br />
         <button type="submit" class="btn btn-primary">Generate!</button>
     </div>
 </EditForm>
-
+<br />
 @if (this.PDFLinks != null && this.PDFLinks.Count > 0)
 {
-    <h2>Lists Links</h2>
     foreach (var link in PDFLinks)
     {
-        <h3>@link.Item1</h3>
-        <p><a href="@link.Item2">Download Card PDF</a></p>
-        <p><span style="white-space: pre-line"> @link.Item3</span></p>
+        <h3>@link.CasterName</h3>
+        <p><a href="@link.PDFUrl">Download Card PDF</a></p>
+        <p><span style="white-space: pre-line"> @link.ListOutput</span></p>
     }
 }
