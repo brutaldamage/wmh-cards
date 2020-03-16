@@ -18,8 +18,6 @@ namespace WarmachineUniversity_Data_Retriever
 	{
 		static async Task Main(string[] args)
 		{
-			try
-			{
 				List<DataModel> modelList = new List<DataModel>();
 
 				using (var http = new HttpClient())
