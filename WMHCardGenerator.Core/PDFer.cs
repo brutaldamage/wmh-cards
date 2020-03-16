@@ -29,7 +29,7 @@ namespace WMHCardGenerator.Core
 
 				var ccListInfo = JsonConvert.DeserializeObject<CCInfoResponse>(await Http.GetStringAsync(url));
 
-				var data = GetLookupData();
+				var data = DataHelper.GetLookupData();
 				string cardUrl = "http://cards.privateerpress.com?card_items_to_pdf=";//$4402,1$4399,1";
 
 				foreach (var list in ccListInfo.Lists)
@@ -132,19 +132,7 @@ namespace WMHCardGenerator.Core
 			return sb.ToString();
 		}
 
-		List<DataModel> GetLookupData()
-		{
-			var assembly = typeof(PDFer).Assembly;
-			var resourceName = "WMHCardGenerator.Core.data.min.json";
-
-			using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-			using (StreamReader reader = new StreamReader(stream))
-			{
-				string result = reader.ReadToEnd();
-
-				return JsonConvert.DeserializeObject<List<DataModel>>(result);
-			}
-		}
+		
 
 		void AddModelName(List<string> modelNames, string name)
 		{
