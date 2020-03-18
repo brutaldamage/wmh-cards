@@ -13,39 +13,59 @@ using WMHCardGenerator.Core;
 
 namespace WMHCardGenerator.Pages
 {
-	public partial class Index
-	{
-		[Inject]
-		public HttpClient Http { get; set; }
+    public partial class Index
+    {
+        [Inject]
+        public HttpClient Http { get; set; }
 
-		[Inject]
-		public IJSRuntime jsRuntime { get; set; }
+        [Inject]
+        public IJSRuntime jsRuntime { get; set; }
 
-		public string ConflictChamberList { get; set; }
+        public string ConflictChamberList { get; set; }
 
-		//public Dictionary<string, string> PDFLinks { get; } = new Dictionary<string, string>();
-		public List<GeneratedData> PDFLinks { get; } = new List<GeneratedData>();
+        public string WarRoomText { get; set; }
 
-		async Task GeneratePDF()
-		{
-			try
-			{
-				this.PDFLinks.Clear();
+        public List<GeneratedData> PDFLinks { get; } = new List<GeneratedData>();
 
-				var links = await new PDFer(this.Http)
-					.Generate(this.ConflictChamberList);
+        async Task GeneratePDF()
+        {
+            try
+            {
+                this.PDFLinks.Clear();
 
-				PDFLinks.AddRange(links);
+                if(!string.IsNullOrEmpty(ConflictChamberList) &&
+                    !string.IsNullOrEmpty(WarRoomText))
+                {
+                    await this.jsRuntime.InvokeVoidAsync("alert", "Please enter just a CC link or warroom text, not both");
+                    return;
+                }
 
-			}
-			catch (Exception ex)
-			{
-				await jsRuntime.InvokeVoidAsync("alert", ex.Message);
-			}
-			finally
-			{
-				this.StateHasChanged();
-			}
-		}
-	}
+                CCInfoResponse listInfo = null;
+                if (!string.IsNullOrEmpty(ConflictChamberList)
+                    && DataHelper.TryGetListId(ConflictChamberList, out string ccid))
+                {
+                    listInfo = await DataHelper.GetConflictChamberList(this.Http, ccid);
+                }
+                else
+                {
+                    listInfo = await DataHelper.ParseWarroomText(this.WarRoomText);
+                }
+
+                var links = await new PDFer(this.Http)
+                    .Generate(listInfo);
+
+                PDFLinks.AddRange(links);
+
+            }
+            catch (Exception ex)
+            {
+                await jsRuntime.InvokeVoidAsync("alert", ex.Message);
+            }
+            finally
+            {
+                this.StateHasChanged();
+            }
+        }
+
+    }
 }
