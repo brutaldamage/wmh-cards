@@ -14,56 +14,64 @@ namespace WMHCardGenerator.Core
     {
         private HttpClient Http { get; }
 
+        private List<DataModel> CardData { get; }
+
         public PDFer(HttpClient http)
         {
             Http = http;
+
+            this.CardData = DataHelper.GetLookupData();
         }
 
         public async Task<List<Models.GeneratedData>> Generate(string cclink)
         {
             List<Models.GeneratedData> PDFLinks = new List<Models.GeneratedData>();
 
-            if (GetListId(cclink, out string ccid))
+            if (TryGetListId(cclink, out string ccid))
             {
-                var url = $"https://api.conflictchamber.com/list/{ccid}.JSON";
+                var listApiUrl = $"https://api.conflictchamber.com/list/{ccid}.JSON";
 
-                var ccListInfo = JsonConvert.DeserializeObject<CCInfoResponse>(await Http.GetStringAsync(url));
+                var ccListInfo = JsonConvert.DeserializeObject<CCInfoResponse>(await Http.GetStringAsync(listApiUrl));
 
-                var data = GetLookupData();
                 string cardUrl = "http://cards.privateerpress.com?card_items_to_pdf=";
 
                 foreach (var list in ccListInfo.Lists)
                 {
                     var caster = list.Models.First(x => x.Type == "Warcaster" || x.Type == "Warlock" || x.Type == "Master");
 
-                    List<string> modelNames = new List<string>();
+                    var models = new List<ModelInfoWrapper>();
+
                     foreach (var model in list.Models)
                     {
-                        AddModelName(modelNames, model.Name);
+                        AddModelName(models, model);
 
                         if (model.Attached != null)
                         {
                             foreach (var attached in model.Attached)
                             {
-                                AddModelName(modelNames, attached.Name);
+                                AddModelName(models, attached);
                             }
                         }
                     }
 
-                    var grouped = modelNames.GroupBy(x => x);
+                    var grouped = models.GroupBy(x => x.Name);
+
                     string queryString = null;
-
-                    var distinct = grouped.Select(x => x.Key);
-
                     foreach (var group in grouped)
                     {
-                        var value = group.Select(x => x).Where(x => !string.IsNullOrEmpty(x));
+                        var name = group.Key;
 
-                        var card = data.FirstOrDefault(x => x.Name.Trim().ToLower() == group.Key.Trim().ToLower() && !string.IsNullOrEmpty(x.CardId));
+                        var card = group.FirstOrDefault()?.Card;
+                        var model = group.FirstOrDefault()?.CCModel;
 
                         if (card != null)
                         {
-                            queryString += $"${card.CardId},{group.Count()}";
+                            int count = group.Count();
+
+                            if (model.Type == "Solo")
+                                count = 1;
+
+                            queryString += $"${card.CardId},{count}";
                         }
                     }
 
@@ -75,7 +83,6 @@ namespace WMHCardGenerator.Core
                     });
                 }
             }
-
             else
             {
                 throw new Exception("Unable to parse conflict chamber link. Make sure it is a valid link");
@@ -83,11 +90,12 @@ namespace WMHCardGenerator.Core
             return PDFLinks;
         }
 
-        public bool GetListId(string cclist, out string ccId)
+
+        bool TryGetListId(string cclistUrl, out string ccId)
         {
             try
             {
-                var uri = new Uri(cclist);
+                var uri = new Uri(cclistUrl);
                 var pathAndQuery = uri.PathAndQuery;
                 ccId = pathAndQuery.Substring(2);
 
@@ -100,14 +108,33 @@ namespace WMHCardGenerator.Core
             }
         }
 
-        public string CreateListDisplayText(string faction, CCListInfoResponse cCInfo)
+        string CreateListDisplayText(string faction, CCListInfoResponse cCInfo)
         {
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine(faction);
-            sb.AppendLine();
             sb.AppendLine($"Theme: {cCInfo.Theme}");
             sb.AppendLine($"Points: {cCInfo.Points}");
+
+            var validation = cCInfo.Validation?.ToList() ?? new List<string>();
+            if (validation.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("WARNING:");
+
+                // display custom message for CID entries, remove it so it doesn't get printed twice.
+                if (validation.Contains("This army contains CID entries."))
+                {
+                    validation.Remove("This army contains CID entries.");
+                    sb.AppendLine("This army contains CID entries. Any CID entries will not have a card included in the PDF.");
+                }
+
+                if (validation.Count > 0)
+                    foreach (var msg in validation)
+                        sb.AppendLine(msg);
+
+                sb.AppendLine();
+            }
 
             var index = 0;
             foreach (var model in cCInfo.Models)
@@ -133,41 +160,47 @@ namespace WMHCardGenerator.Core
             return sb.ToString();
         }
 
-        List<DataModel> GetLookupData()
+        void AddModelName(List<ModelInfoWrapper> models, CCAttachedModelInfoResponse model)
         {
-            var assembly = typeof(PDFer).Assembly;
-            var resourceName = "WMHCardGenerator.Core.data.json";
-
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                string result = reader.ReadToEnd();
-
-                return JsonConvert.DeserializeObject<List<DataModel>>(result);
-            }
-        }
-
-        void AddModelName(List<string> modelNames, string name)
-        {
-            var n = name;
+            var name = model.Name;
             if (name.Contains("(min)"))
-                n = name.Replace("(min)", string.Empty);
+                name = name.Replace("(min)", string.Empty);
             else if (name.Contains("(max)"))
-                n = name.Replace("(max)", string.Empty);
+                name = name.Replace("(max)", string.Empty);
 
             // handle req point cards
             else if (name.EndsWith("(2)"))
-                n = name.Replace("(2)", string.Empty);
+                name = name.Replace("(2)", string.Empty);
             else if (name.EndsWith("(3)"))
-                n = name.Replace("(3)", string.Empty);
+                name = name.Replace("(3)", string.Empty);
             else if (name.EndsWith("(4)"))
-                n = name.Replace("(4)", string.Empty);
+                name = name.Replace("(4)", string.Empty);
             else if (name.EndsWith("(5)"))
-                n = name.Replace("(5)", string.Empty);
+                name = name.Replace("(5)", string.Empty);
             else if (name.EndsWith("(6)"))
-                n = name.Replace("(6)", string.Empty);
+                name = name.Replace("(6)", string.Empty);
 
-            modelNames.Add(n.Trim());
+            name = name.Trim();
+
+            models.Add(new ModelInfoWrapper
+            {
+                Name = name,
+                CCModel = model,
+                // need to trim the name to match,
+                // otherwise things like (min) & (max) will match
+                Card = this.CardData.FirstOrDefault(x => x.Name == name),
+            });
+        }
+
+        class ModelInfoWrapper
+        {
+            public string Name { get; set; }
+
+            public CCAttachedModelInfoResponse CCModel { get; set; }
+
+            public DataModel Card { get; set; }
+
+            public bool IsAttached => this.CCModel?.GetType() == typeof(CCAttachedModelInfoResponse);
         }
     }
 }
