@@ -1,15 +1,15 @@
 ﻿@page "/"
 
-<h1>Warmachine and Hordes Card Generator</h1>
+<h1>Warmachine and Hordes List PDF'r</h1>
 
-<p>This is a simple web application that allows you to automatically generate and download a card pdf from <a target="_blank" href="http://cards.privateerpress.com">Privateer Press's Card Database</a>.</p>
+<p>This is a web application that allows you to automatically generate and download a card pdf from <a target="_blank" href="http://cards.privateerpress.com">Privateer Press's Card Database</a>.</p>
 
-<p>It accepts a link for a <a target="_blank" href="https://conflictchamber.com/">Conflict Chamber</a> list, and will generate a PDF from the card database using the models in the list.</p>
+<p>It accepts a link for a <a target="_blank" href="https://conflictchamber.com/">Conflict Chamber</a> list, or the list text from WarRoom2, and will generate a PDF from the card database using the models in the list.</p>
 
 <h4>Notes</h4>
 <ul>
-    <li>1) Tool is still in development. There are A LOT of cards in the database and it is very likely I missed some models and matching up the ids. If you're having problems, please fill out the feedback form and let me know what lists/models aren't working.</li>
-    <li>2) If a card is not in the card database (such as CID models) it will not show in the generated PDF.</li>
+    <li>1) Tool is still in development. There are A LOT of cards in the database and it is very likely I missed some models when matching up the ids. If you're having problems, please fill out the feedback form and let me know what lists/models aren't working.</li>
+    <li>2) If a model is not in the card database (such as CID models) it will not show in the generated PDF.</li>
 </ul>
 
 <br />
@@ -18,10 +18,12 @@
     <div class="row">
         <div class="form-group col-md-6">
             <label class="control-label" for="listInput"><b>Enter List Url</b></label>
-            <p style="font-size: 0.8em;">This should be the permalink from conflict chamber
-            <br />
-            <b>example:</b>
-            https://conflictchamber.com/?cg201b_-1yo8oeoaoaoaolosonoSotoqoqororopofogovou</p>
+            <p style="font-size: 0.8em;">
+                This should be the permalink from conflict chamber
+                <br />
+                <b>example:</b>
+                https://conflictchamber.com/?cg201b_-1yo8oeoaoaoaolosonoSotoqoqororopofogovou
+            </p>
             <InputText id="listInput" class="form-control" @bind-Value="@ConflictChamberList" />
             <br />
         </div>
@@ -32,8 +34,13 @@
             </div>
         </div>
     </div>
-    <div class="row">
-        <button type="submit" class="btn btn-primary">Generate!</button>
+    <div class="row ">
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary  float-left">Generate!</button>
+        </div>
+        <div class="col-md-3">
+            <button type="button" class="btn btn-secondary float-right" @onclick="ClearInputs">Clear</button>
+        </div>
     </div>
 </EditForm>
 <br />

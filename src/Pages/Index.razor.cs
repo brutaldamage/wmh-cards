@@ -27,6 +27,15 @@ namespace WMHCardGenerator.Pages
 
         public List<GeneratedData> PDFLinks { get; } = new List<GeneratedData>();
 
+        void ClearInputs()
+        {
+            this.ConflictChamberList = null;
+            this.WarRoomText = null;
+            this.PDFLinks.Clear();
+
+            this.StateHasChanged();
+        }
+
         async Task GeneratePDF()
         {
             try
@@ -41,14 +50,19 @@ namespace WMHCardGenerator.Pages
                 }
 
                 CCInfoResponse listInfo = null;
-                if (!string.IsNullOrEmpty(ConflictChamberList)
+
+                if(!string.IsNullOrWhiteSpace(WarRoomText))
+                {
+                    listInfo = await DataHelper.ParseWarroomText(this.WarRoomText);
+                }
+                else if (!string.IsNullOrEmpty(ConflictChamberList)
                     && DataHelper.TryGetListId(ConflictChamberList, out string ccid))
                 {
                     listInfo = await DataHelper.GetConflictChamberList(this.Http, ccid);
                 }
                 else
                 {
-                    listInfo = await DataHelper.ParseWarroomText(this.WarRoomText);
+                    throw new Exception("Please enter a valid conflict chamber permalink or WarRoom list text.");
                 }
 
                 var links = await new PDFer(this.Http)
