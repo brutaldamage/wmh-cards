@@ -11,7 +11,7 @@ namespace WMHCardGenerator.Core
 		public static List<DataModel> GetLookupData()
 		{
 			var assembly = typeof(PDFer).Assembly;
-			var resourceName = "WMHCardGenerator.Core.data.min.json";
+			var resourceName = "WMHCardGenerator.Core.data.json";
 
 			using (Stream stream = assembly.GetManifestResourceStream(resourceName))
 			using (StreamReader reader = new StreamReader(stream))

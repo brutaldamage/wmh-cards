@@ -12,14 +12,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="data.json" />
-    <None Remove="data.min.json" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="data.json">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="data.min.json">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </EmbeddedResource>

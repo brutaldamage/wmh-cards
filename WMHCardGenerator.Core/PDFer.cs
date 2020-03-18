@@ -10,151 +10,179 @@ using WMHCardGenerator.Models;
 
 namespace WMHCardGenerator.Core
 {
-	public class PDFer
-	{
-		private HttpClient Http { get; }
+    public class PDFer
+    {
+        private HttpClient Http { get; }
 
-		public PDFer(HttpClient http)
-		{
-			Http = http;
-		}
+        private List<DataModel> CardData { get; }
 
-		public async Task<List<Models.GeneratedData>> Generate(string cclink)
-		{
-			List<Models.GeneratedData> PDFLinks = new List<Models.GeneratedData>();
+        public PDFer(HttpClient http)
+        {
+            Http = http;
 
-			if (GetListId(cclink, out string ccid))
-			{
-				var url = $"https://api.conflictchamber.com/list/{ccid}.JSON";
+            this.CardData = DataHelper.GetLookupData();
+        }
 
-				var ccListInfo = JsonConvert.DeserializeObject<CCInfoResponse>(await Http.GetStringAsync(url));
+        public async Task<List<Models.GeneratedData>> Generate(string cclink)
+        {
+            List<Models.GeneratedData> PDFLinks = new List<Models.GeneratedData>();
 
-				var data = DataHelper.GetLookupData();
-				string cardUrl = "http://cards.privateerpress.com?card_items_to_pdf=";//$4402,1$4399,1";
+            if (TryGetListId(cclink, out string ccid))
+            {
+                var listApiUrl = $"https://api.conflictchamber.com/list/{ccid}.JSON";
 
-				foreach (var list in ccListInfo.Lists)
-				{
-					var caster = list.Models.First(x => x.Type == "Warcaster" || x.Type == "Warlock" || x.Type == "Master");
+                var ccListInfo = JsonConvert.DeserializeObject<CCInfoResponse>(await Http.GetStringAsync(listApiUrl));
 
-					List<string> modelNames = new List<string>();
-					foreach (var model in list.Models)
-					{
-						AddModelName(modelNames, model.Name);
+                string cardUrl = "http://cards.privateerpress.com?card_items_to_pdf=";
 
-						if (model.Attached != null)
-						{
-							foreach (var attached in model.Attached)
-							{
-								AddModelName(modelNames, attached.Name);
-							}
-						}
-					}
+                foreach (var list in ccListInfo.Lists)
+                {
+                    var caster = list.Models.First(x => x.Type == "Warcaster" || x.Type == "Warlock" || x.Type == "Master");
 
-					var grouped = modelNames.GroupBy(x => x);
-					string queryString = null;
+                    var models = new List<ModelInfoWrapper>();
 
-					var distinct = grouped.Select(x => x.Key);
+                    foreach (var model in list.Models)
+                    {
+                        AddModelName(models, model);
 
-					foreach (var group in grouped)
-					{
-						var value = group.Select(x => x).Where(x => !string.IsNullOrEmpty(x));
+                        if (model.Attached != null)
+                        {
+                            foreach (var attached in model.Attached)
+                            {
+                                AddModelName(models, attached);
+                            }
+                        }
+                    }
 
-						var card = data.FirstOrDefault(x => x.Name.Trim().ToLower() == group.Key.Trim().ToLower() && !string.IsNullOrEmpty(x.CardId));
+                    var grouped = models.GroupBy(x => x.Name);
 
-						if (card != null)
-						{
-							queryString += $"${card.CardId},{group.Count()}";
-						}
-					}
+                    string queryString = null;
+                    foreach (var group in grouped)
+                    {
+                        var name = group.Key;
 
-					PDFLinks.Add(new GeneratedData
-					{
-						CasterName = caster.Name,
-						PDFUrl = $"{cardUrl}{queryString}",
-						ListOutput = CreateListDisplayText(ccListInfo.Faction, list)
-					});
-				}
-			}
+                        var card = group.FirstOrDefault()?.Card;
+                        var model = group.FirstOrDefault()?.CCModel;
 
-			else
-			{
-				throw new Exception("Unable to parse conflict chamber link. Make sure it is a valid link");
-			}
-			return PDFLinks;
-		}
+                        if (card != null)
+                        {
+                            int count = group.Count();
 
-		public bool GetListId(string cclist, out string ccId)
-		{
-			try
-			{
-				var uri = new Uri(cclist);
-				var pathAndQuery = uri.PathAndQuery;
-				ccId = pathAndQuery.Substring(2);
+                            if (model.Type == "Solo")
+                                count = 1;
 
-				return true;
-			}
-			catch (Exception)
-			{
-				ccId = null;
-				return false;
-			}
-		}
+                            queryString += $"${card.CardId},{count}";
+                        }
+                    }
 
-		public string CreateListDisplayText(string faction, CCListInfoResponse cCInfo)
-		{
-			StringBuilder sb = new StringBuilder();
+                    PDFLinks.Add(new GeneratedData
+                    {
+                        CasterName = caster.Name,
+                        PDFUrl = $"{cardUrl}{queryString}",
+                        ListOutput = CreateListDisplayText(ccListInfo.Faction, list)
+                    });
+                }
+            }
 
-			sb.AppendLine(faction);
-			sb.AppendLine();
-			sb.AppendLine($"Theme: {cCInfo.Theme}");
-			sb.AppendLine($"Points: {cCInfo.Points}");
+            else
+            {
+                throw new Exception("Unable to parse conflict chamber link. Make sure it is a valid link");
+            }
+            return PDFLinks;
+        }
 
-			var index = 0;
-			foreach (var model in cCInfo.Models)
-			{
-				if (index == 0)
-				{
-					sb.AppendLine($"[{model.Desc}] {model.Name} [{model.Cost}]");
 
-					if (model.Attached != null && model.Attached.Length > 0)
-					{
-						foreach (var attached in model.Attached)
-							sb.AppendLine($"- {attached.Name} [{attached.Cost}]");
-					}
-				}
-				else
-				{
-					sb.AppendLine($"{model.Name} [{model.Cost}]");
-				}
-				index++;
-			}
+        bool TryGetListId(string cclistUrl, out string ccId)
+        {
+            try
+            {
+                var uri = new Uri(cclistUrl);
+                var pathAndQuery = uri.PathAndQuery;
+                ccId = pathAndQuery.Substring(2);
 
-			return sb.ToString();
-		}
+                return true;
+            }
+            catch (Exception)
+            {
+                ccId = null;
+                return false;
+            }
+        }
 
-		
+        string CreateListDisplayText(string faction, CCListInfoResponse cCInfo)
+        {
+            StringBuilder sb = new StringBuilder();
 
-		void AddModelName(List<string> modelNames, string name)
-		{
-			var n = name;
-			if (name.Contains("(min)"))
-				n = name.Replace("(min)", string.Empty);
-			else if (name.Contains("(max)"))
-				n = name.Replace("(max)", string.Empty);
+            sb.AppendLine(faction);
+            sb.AppendLine();
+            sb.AppendLine($"Theme: {cCInfo.Theme}");
+            sb.AppendLine($"Points: {cCInfo.Points}");
 
-			// handle req point cards
-			else if (name.EndsWith("(2)"))
-				n = name.Replace("(2)", string.Empty);
-			else if(name.EndsWith("(3)"))
-				n = name.Replace("(3)", string.Empty);
-			else if (name.EndsWith("(4)"))
-				n = name.Replace("(4)", string.Empty);
-			else if (name.EndsWith("(5)"))
-				n = name.Replace("(5)", string.Empty);
-			else if (name.EndsWith("(6)"))
-				n = name.Replace("(6)", string.Empty);
+            var index = 0;
+            foreach (var model in cCInfo.Models)
+            {
+                if (index == 0)
+                {
+                    sb.AppendLine($"[{model.Desc}] {model.Name} [{model.Cost}]");
+                }
+                else
+                {
+                    sb.AppendLine($"{model.Name} [{model.Cost}]");
+                }
 
-			modelNames.Add(n.Trim());
-		}
-	}
+                if (model.Attached != null && model.Attached.Length > 0)
+                {
+                    foreach (var attached in model.Attached)
+                        sb.AppendLine($"- {attached.Name} [{attached.Cost}]");
+                }
+
+                index++;
+            }
+
+            return sb.ToString();
+        }
+
+        void AddModelName(List<ModelInfoWrapper> models, CCAttachedModelInfoResponse model)
+        {
+            var name = model.Name;
+            if (name.Contains("(min)"))
+                name = name.Replace("(min)", string.Empty);
+            else if (name.Contains("(max)"))
+                name = name.Replace("(max)", string.Empty);
+
+            // handle req point cards
+            else if (name.EndsWith("(2)"))
+                name = name.Replace("(2)", string.Empty);
+            else if (name.EndsWith("(3)"))
+                name = name.Replace("(3)", string.Empty);
+            else if (name.EndsWith("(4)"))
+                name = name.Replace("(4)", string.Empty);
+            else if (name.EndsWith("(5)"))
+                name = name.Replace("(5)", string.Empty);
+            else if (name.EndsWith("(6)"))
+                name = name.Replace("(6)", string.Empty);
+
+            name = name.Trim();
+
+            models.Add(new ModelInfoWrapper
+            {
+                Name = name,
+                CCModel = model,
+                // need to trim the name to match,
+                // otherwise things like (min) & (max) will match
+                Card = this.CardData.FirstOrDefault(x => x.Name == name),
+            });
+        }
+
+        class ModelInfoWrapper
+        {
+            public string Name { get; set; }
+
+            public CCAttachedModelInfoResponse CCModel { get; set; }
+
+            public DataModel Card { get; set; }
+
+            public bool IsAttached => this.CCModel?.GetType() == typeof(CCAttachedModelInfoResponse);
+        }
+    }
 }
