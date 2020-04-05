@@ -6,42 +6,46 @@ using WMHCardGenerator.Models;
 
 namespace ListTester
 {
-    class Program
-    {
-        static async Task Main(string[] args)
-        {
-            try
-            {
-                Console.WriteLine("Enter List Url");
-                string url = Console.ReadLine().Trim();
+	class Program
+	{
+		static async Task Main(string[] args)
+		{
+			try
+			{
+				using (var httpClient = new HttpClient())
+				{
+					var dataHelper = new DataHelper(httpClient);
 
-                var httpClient = new HttpClient();
-                CCInfoResponse info = null;
-                if (Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri uri)
-                    && DataHelper.TryGetListId(uri.ToString(), out string ccid))
-                {
-                    info = await DataHelper.GetConflictChamberList(httpClient, ccid);
-                }
-                else
-                {
-                    info = await DataHelper.ParseWarroomText(listText);
-                }
+					Console.WriteLine("Enter List Url");
+					string url = Console.ReadLine().Trim();
 
-                var output = await new PDFer(httpClient)
-                     .Generate(info);
+					CCInfoResponse info = null;
+					if (Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri uri)
+						&& dataHelper.TryGetListId(uri.ToString(), out string ccid))
+					{
+						info = await dataHelper.GetConflictChamberList(ccid);
+					}
+					else
+					{
+						info = await dataHelper.ParseWarroomText(listText);
+					}
 
-                Console.WriteLine();
-                foreach (var link in output)
-                    Console.WriteLine(link.PDFUrl);
+					var output = await new PDFer(httpClient, dataHelper)
+						 .Generate(info);
 
-                Console.ReadLine();
-            }
-            catch (Exception ex)
-            {
-            }
-        }
+					Console.WriteLine();
+					foreach (var link in output)
+						Console.WriteLine(link.PDFUrl);
 
-        static string listText = @"War Room Army
+					Console.ReadLine();
+				}
+			}
+			catch (Exception ex)
+			{
+			}
+		}
+
+		static string listText = @"War Room Army
 
 Crucible Guard - Syvestro Rocketmen v3
 
@@ -77,5 +81,5 @@ THEME: Magnum Opus
 
 GENERATED : 03/17/2020 22:23:47
 BUILD ID : 2099.20-03-03";
-    }
+	}
 }

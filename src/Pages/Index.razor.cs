@@ -15,8 +15,11 @@ namespace WMHCardGenerator.Pages
 {
     public partial class Index
     {
-        [Inject]
-        public HttpClient Http { get; set; }
+		[Inject]
+		public DataHelper DataHelper { get; set; }
+
+		[Inject]
+		public PDFer PDFer { get; set; }
 
         [Inject]
         public IJSRuntime jsRuntime { get; set; }
@@ -58,15 +61,14 @@ namespace WMHCardGenerator.Pages
                 else if (!string.IsNullOrEmpty(ConflictChamberList)
                     && DataHelper.TryGetListId(ConflictChamberList, out string ccid))
                 {
-                    listInfo = await DataHelper.GetConflictChamberList(this.Http, ccid);
+                    listInfo = await DataHelper.GetConflictChamberList(ccid);
                 }
                 else
                 {
                     throw new Exception("Please enter a valid conflict chamber permalink or WarRoom list text.");
                 }
 
-                var links = await new PDFer(this.Http)
-                    .Generate(listInfo);
+                var links = await this.PDFer.Generate(listInfo);
 
                 PDFLinks.AddRange(links);
 

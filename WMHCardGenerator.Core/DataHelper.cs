@@ -12,21 +12,23 @@ namespace WMHCardGenerator.Core
 {
     public class DataHelper
     {
-        public static List<DataModel> GetLookupData()
+		private HttpClient httpClient;
+
+		public DataHelper(HttpClient httpClient)
+		{
+            this.httpClient = httpClient;
+		}
+
+        public async Task<List<DataModel>> GetLookupData()
         {
-            var assembly = typeof(PDFer).Assembly;
-            var resourceName = "WMHCardGenerator.Core.data.json";
+            var results = await this.httpClient.GetStringAsync("https://api.conflictchamber.com/cardentries");
 
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                string result = reader.ReadToEnd();
+            var data = JsonConvert.DeserializeObject<Dictionary<string, DataModel>>(results);
 
-                return JsonConvert.DeserializeObject<List<DataModel>>(result);
-            }
+            return data.Values.ToList();            
         }
 
-        public static bool TryGetListId(string cclistUrl, out string ccId)
+        public bool TryGetListId(string cclistUrl, out string ccId)
         {
             try
             {
@@ -44,16 +46,16 @@ namespace WMHCardGenerator.Core
         }
 
 
-        public static async Task<CCInfoResponse> GetConflictChamberList(HttpClient http, string ccid)
+        public async Task<CCInfoResponse> GetConflictChamberList(string ccid)
         {
             var listApiUrl = $"https://api.conflictchamber.com/list/{ccid}.JSON";
 
-            var ccListInfo = JsonConvert.DeserializeObject<CCInfoResponse>(await http.GetStringAsync(listApiUrl));
+            var ccListInfo = JsonConvert.DeserializeObject<CCInfoResponse>(await this.httpClient.GetStringAsync(listApiUrl));
 
             return ccListInfo;
         }
 
-        public static async Task<CCInfoResponse> ParseWarroomText(string text)
+        public async Task<CCInfoResponse> ParseWarroomText(string text)
         {
             var info = new CCInfoResponse()
             {

@@ -12,19 +12,18 @@ namespace WMHCardGenerator.Core
 {
     public class PDFer
     {
-        private HttpClient Http { get; }
+        HttpClient Http { get; }
+		DataHelper DataHelper { get; }
 
-        private List<DataModel> CardData { get; }
-
-        public PDFer(HttpClient http)
+		public PDFer(HttpClient http, DataHelper dataHelper)
         {
             Http = http;
-
-            this.CardData = DataHelper.GetLookupData();
+            DataHelper = dataHelper;
         }
 
         public async Task<List<Models.GeneratedData>> Generate(CCInfoResponse ccListInfo)
         {
+            var cardData = await DataHelper.GetLookupData();
             List<Models.GeneratedData> PDFLinks = new List<Models.GeneratedData>();
 
             string cardUrl = "http://cards.privateerpress.com?card_items_to_pdf=";
@@ -37,13 +36,13 @@ namespace WMHCardGenerator.Core
 
                 foreach (var model in list.Models)
                 {
-                    AddModelName(models, model);
+                    AddModelName(cardData, models, model);
 
                     if (model.Attached != null)
                     {
                         foreach (var attached in model.Attached)
                         {
-                            AddModelName(models, attached);
+                            AddModelName(cardData, models, attached);
                         }
                     }
                 }
@@ -133,7 +132,7 @@ namespace WMHCardGenerator.Core
             return sb.ToString();
         }
 
-        void AddModelName(List<ModelInfoWrapper> models, CCAttachedModelInfoResponse model)
+        void AddModelName(List<DataModel> cardData, List<ModelInfoWrapper> models, CCAttachedModelInfoResponse model)
         {
             var name = model.Name;
             if (name.Contains("(min)"))
@@ -161,7 +160,7 @@ namespace WMHCardGenerator.Core
                 CCModel = model,
                 // need to trim the name to match,
                 // otherwise things like (min) & (max) will match
-                Card = this.CardData.FirstOrDefault(x => x.Name == name),
+                Card = cardData.FirstOrDefault(x => x.Name == name),
             });
         }
 
